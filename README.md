@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">CaRF: Camera-Aware Referring Field for Multi-View Consistent 3D Gaussian Segmentation</h1>
   <p align="center">
-    CVM 2025 Under Review (Anonymous Submission)
+    ICME 2026 Under Review (Anonymous Submission)
   </p>
  <p align="center">
     <img src='https://img.shields.io/badge/Paper-Anonymized-grey?style=flat&logo=arXiv&' alt='Anonymous Paper'>
@@ -9,9 +9,7 @@
 </p>
 
 ---
-<p align="center"> <i>This repository is part of an anonymous CVM 2025 submission. All identifying information has been removed for double-blind review.</i> </p> 
 
----
 
 This paper presents **Camera-Aware Referring Field (CaRF)**, a novel framework for referring segmentation in 3D Gaussian splatting that explicitly models view-dependent geometry and multi-view consistency. CaRF introduces two key components: (1) **In-Training Paired-View Supervision (ITPVS)**, which enforces consistency across calibrated camera views by jointly supervising Gaussian projections; and (2) **Gaussian Field Camera Encoding (GFCE)**, which integrates camera parameters into the Gaussian–language feature space to enhance geometric reasoning.  Extensive experiments on the **Ref-LERF**, **LERF-OVS**, and **3D-OVS** datasets demonstrate that CaRF achieves consistent improvements over existing methods while maintaining robust cross-view alignment and fine-grained semantic precision.  
 
@@ -20,11 +18,6 @@ This paper presents **Camera-Aware Referring Field (CaRF)**, a novel framework f
 ---
 
 ## Datasets
-We evaluate on three standard 3D referring and open-vocabulary segmentation benchmarks:
-- **Ref-LERF**  
-- **LERF-OVS**  
-- **3D-OVS**  
-
 To prepare the Ref-LERF dataset, please follow the directory structure below:
 ```bash
 <path to ref-lerf dataset>
