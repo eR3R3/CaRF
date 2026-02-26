@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">CaRF: Camera-Aware Referring Field for Multi-View Consistent 3D Gaussian Segmentation</h1>>
  <p align="center">
-    <img src='https://img.shields.io/badge/Paper-Anonymized-grey?style=flat&logo=arXiv&' alt='Anonymous Paper'>
+    [<img src='https://img.shields.io/badge/Paper-Anonymized-grey?style=flat&logo=arXiv&' alt='arxiv'>](https://arxiv.org/abs/2511.03992)
   </p>
 </p>
 
