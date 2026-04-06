@@ -82,8 +82,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         colors_precomp = override_color
         
     world_view_transform = viewpoint_camera.world_view_transform
-    R = world_view_transform[:3, :3]  # [3, 3] 旋转矩阵
-    T = world_view_transform[:3, 3]   # [3] 平移向量
+    R = world_view_transform[:3, :3]  # [3, 3] index of 0-2 for both colume and row, represent coordinate change
+    T = world_view_transform[:3, 3]   # [3] last column of view transformation matrix
     camera_params = torch.cat([R.flatten(), T], dim=0).unsqueeze(0)  # [1, 12]
     camera_feature = pc.camera_mlp(camera_params)
     
