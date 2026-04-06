@@ -89,28 +89,28 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     com_loss = multi_pos_cross_entropy(cosine_similarities, sentence_tensor)
                     gt_mask = viewpoint_cam.gt_mask[viewpoint_cam.category[i]].to("cuda")
                     
-                    # 计算当前视角的bce loss
+                    # calculate the current bce loss angle
                     current_bce_loss = bce_loss(language_feature, gt_mask)
                     
                     second_view_bce_loss = 0
                     for other_cam in train_cams:
                         if other_cam != viewpoint_cam and current_category in other_cam.category:
-                            # 找到包含相同category的另一个视角
+                            # find another angle that has objects with the same category
                             other_sentence_idx = other_cam.category.index(current_category)
                             other_sentence = other_cam.sentence[other_sentence_idx]
                             
-                            # 对第二个视角进行渲染
+                            # render the second angle using diff gausssian renderer
                             other_render_pkg = render(other_cam, gaussians, pipe, background, opt, 
                                                     sentence=other_sentence, ratio=ratio)
                             other_language_feature = other_render_pkg["language_feature_image"]
                             other_gt_mask = other_cam.gt_mask[current_category].to("cuda")
                             
-                            # 计算第二个视角的bce loss
+                            # calculate bce loss for the second view point
                             second_view_bce_loss = bce_loss(other_language_feature, other_gt_mask)
                             break 
                     
                     
-                    # 合并两个视角的bce loss：当前视角0.7权重，第二个视角0.3权重
+                    # merge the bce loss by weights, the weights are hyper parameters
                     combined_bce_loss = 0.7 * current_bce_loss + 0.3 * second_view_bce_loss
                     #combined_bce_loss = 1.0 * current_bce_loss
                     loss = combined_bce_loss + 0.1*com_loss
