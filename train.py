@@ -91,7 +91,8 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     
                     # calculate the current bce loss angle
                     current_bce_loss = bce_loss(language_feature, gt_mask)
-                    
+
+                    # In-training paired-view supervision, get another view to training
                     second_view_bce_loss = 0
                     for other_cam in train_cams:
                         if other_cam != viewpoint_cam and current_category in other_cam.category:
@@ -119,35 +120,30 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                     gaussians.optimizer.zero_grad(set_to_none = True)
                 iter_end.record()
 
-                # —— 计步、更新进度条与日志 —— #
                 iteration += 1
                 with torch.no_grad():
                     ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
-                    progress_bar.update(1)                    # 每步 +1
+                    progress_bar.update(1)                 
                     
                     if iteration % 10 == 0:
                         progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.7f}"})
                     total_loss.append(ema_loss_for_log)
                 
-                # 每50个iteration运行一次render.py
                 if (iteration % 500 == 0) or (iteration in range(10000, 12000, 50)):
                     print(f"\nRunning render.py at iteration {iteration}")
                     import subprocess
                     import sys
                     import os
                     
-                    # 临时保存当前模型状态
                     temp_checkpoint_path = os.path.join(scene.model_path, f"temp_chkpnt_iter_{iteration}.pth")
                     torch.save((gaussians.capture(opt.include_feature), iteration), temp_checkpoint_path)
                     
-                    # 构建render.py的调用命令，传递必要的参数
                     render_cmd = [
                         sys.executable, "/root/autodl-tmp/refer-splat/render.py",
                         "--checkpoint", temp_checkpoint_path,
                         "--include_feature"
                     ]
                     
-                    # 添加必要的参数
                     if original_args:
                         if hasattr(original_args, 'source_path'):
                             render_cmd.extend(["--source_path", original_args.source_path])
@@ -159,12 +155,10 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                             render_cmd.append("--white_background")
                     
                     try:
-                        # 运行render.py (不捕获输出，让进度条显示)
                         print(f"Running render.py for iteration {iteration}")
                         result = subprocess.run(render_cmd, check=True)
                         print(f"Render completed successfully for iteration {iteration}")
                         
-                        # 运行test_miou.py计算分数
                         print(f"Calculating mIoU for iteration {iteration}")
                         miou_cmd = [sys.executable, "/root/autodl-tmp/refer-splat/test_miou.py"]
                         try:
@@ -173,7 +167,6 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                             print(f"mIoU Result for iteration {iteration}:")
                             print(miou_output)
                             
-                            # 保存mIoU分数到文件
                             miou_log_path = os.path.join(scene.model_path, "miou_scores_attention.txt")
                             with open(miou_log_path, "a", encoding="utf-8") as f:
                                 f.write(f"Iteration {iteration}:\n")
@@ -184,7 +177,6 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                         except subprocess.CalledProcessError as miou_e:
                             error_msg = f"mIoU calculation failed: {miou_e.stderr}"
                             print(error_msg)
-                            # 同样保存错误信息
                             miou_log_path = os.path.join(scene.model_path, "miou_scores_attention.txt")
                             with open(miou_log_path, "a", encoding="utf-8") as f:
                                 f.write(f"Iteration {iteration}:\n")
@@ -193,30 +185,25 @@ def training(dataset, opt, pipe, testing_iterations, saving_iterations, checkpoi
                         except Exception as miou_e:
                             error_msg = f"mIoU unexpected error: {str(miou_e)}"
                             print(error_msg)
-                            # 同样保存错误信息
                             miou_log_path = os.path.join(scene.model_path, "miou_scores_attention.txt")
                             with open(miou_log_path, "a", encoding="utf-8") as f:
                                 f.write(f"Iteration {iteration}:\n")
                                 f.write(f"{error_msg}\n")
                                 f.write("-" * 50 + "\n")
                         
-                        # 删除临时checkpoint文件
                         if iteration!= 15100 and os.path.exists(temp_checkpoint_path):
                             os.remove(temp_checkpoint_path)
                             print(f"Temporary checkpoint deleted: {temp_checkpoint_path}")
                             
                     except subprocess.CalledProcessError as e:
                         print(f"Render failed for iteration {iteration}: {e.stderr}")
-                        # 删除临时文件
                         if os.path.exists(temp_checkpoint_path):
                             os.remove(temp_checkpoint_path)
                     except Exception as e:
                         print(f"Unexpected error during render: {str(e)}")
-                        # 删除临时文件
                         if os.path.exists(temp_checkpoint_path):
                             os.remove(temp_checkpoint_path)
 
-                # 检查退出条件
                 if iteration >= max_iters:
                     break
 
@@ -260,20 +247,13 @@ if __name__ == "__main__":
     epoch_num=10
     torch.autograd.set_detect_anomaly(args.detect_anomaly)
     
-    # 连续训练5次，每次都从同一个初始checkpoint开始
     num_runs = 3
     
-    print(f"\n开始连续训练 {num_runs} 次")
     print("=" * 60)
     
     for run_num in range(1, num_runs + 1):
-        print(f"\n开始第 {run_num}/{num_runs} 次训练")
-        print("-" * 40)
         
         training(lp.extract(args), op.extract(args), pp.extract(args), 
                 args.test_iterations, args.save_iterations, args.checkpoint_iterations, 
                 args.start_checkpoint, args.debug_from, epoch_num, original_args=args)
-        
-        print(f"第 {run_num}/{num_runs} 次训练完成")
     
-    print("\n所有 {num_runs} 次训练完成!")
